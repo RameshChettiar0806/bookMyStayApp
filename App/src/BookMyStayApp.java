@@ -1,45 +1,47 @@
 /**
  * MAIN CLASS - BookMyStayApp
  *
- * Use Case 1: Application Entry & Welcome Message
+ * Entry point of the application.
  *
- * Description:
- * This class represents the entry point of the
- * Hotel Booking Management System (BookMyStay).
- *
- * At this stage, the application:
- * - Starts execution from the main() method
- * - Displays a welcome message to the user
- * - Confirms that the system has started successfully
- *
- * No business logic, data structures, or user input
- * is implemented in this use case.
- *
- * The goal is to establish a clear and predictable
- * application startup point.
- *
- * @author Ramesh
- * @version 1.0
+ * @version 2.1
  */
 public class BookMyStayApp {
 
-    /**
-     * Application entry point.
-     *
-     * This method is the first method executed
-     * when the program is launched by the JVM.
-     *
-     * @param args Command-line arguments
-     */
-    public static void main(String[] args) {
+    public static void main(String[] args){
 
-        // Welcome message
-        System.out.println("Welcome to BookMyStay - Hotel Booking Management System");
+        System.out.println("=======================================");
+        System.out.println("     Welcome to Book My Stay App       ");
+        System.out.println("     Hotel Booking System v1.0         ");
+        System.out.println("=======================================\n");
 
-        // System status
-        System.out.println("System initialized successfully.");
+        // Create room objects
+        Room singleRoom = new SingleRoom();
+        Room doubleRoom = new DoubleRoom();
+        Room suiteRoom = new SuiteRoom();
 
-        // Version info
-        System.out.println("Application Version: v1.0");
+        // Static availability
+        int singleRoomAvailable = 5;
+        int doubleRoomAvailable = 3;
+        int suiteRoomAvailable = 2;
+
+        System.out.println("===== ROOM DETAILS =====\n");
+
+        System.out.println("Single Room:");
+        singleRoom.displayRoomDetails();
+        System.out.println("Available: " + singleRoomAvailable);
+        System.out.println();
+
+        System.out.println("Double Room:");
+        doubleRoom.displayRoomDetails();
+        System.out.println("Available: " + doubleRoomAvailable);
+        System.out.println();
+
+        System.out.println("Suite Room:");
+        suiteRoom.displayRoomDetails();
+        System.out.println("Available: " + suiteRoomAvailable);
+        System.out.println();
+
+        System.out.println("System started successfully.");
+        System.out.println("Application terminated.");
     }
 }
