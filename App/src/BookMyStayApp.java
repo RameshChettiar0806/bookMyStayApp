@@ -1,36 +1,41 @@
+/**
+ * MAIN CLASS - BookMyStayApp
+ *
+ * Use Case 5: Booking Request (FIFO)
+ *
+ * Description:
+ * Demonstrates how booking requests are
+ * queued and processed in FIFO order.
+ *
+ * @version 5.0
+ */
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        System.out.println("Hotel Room Inventory Status\n");
+        System.out.println("Booking Request Queue\n");
 
-        // Room objects
-        Room singleRoom = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suiteRoom = new SuiteRoom();
+        // Initialize queue
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        // Inventory
-        RoomInventory inventory = new RoomInventory();
+        // Create booking requests
+        Reservation r1 = new Reservation("Abhi", "Single Room");
+        Reservation r2 = new Reservation("Subha", "Double Room");
+        Reservation r3 = new Reservation("Vanmathi", "Suite Room");
 
-        // Single Room
-        System.out.println("Single Room:");
-        singleRoom.displayRoomDetails();
-        System.out.println("Available Rooms: " +
-                inventory.getAvailability("Single Room"));
-        System.out.println();
+        // Add to queue
+        bookingQueue.addRequest(r1);
+        bookingQueue.addRequest(r2);
+        bookingQueue.addRequest(r3);
 
-        // Double Room
-        System.out.println("Double Room:");
-        doubleRoom.displayRoomDetails();
-        System.out.println("Available Rooms: " +
-                inventory.getAvailability("Double Room"));
-        System.out.println();
+        // Process queue (FIFO)
+        while (bookingQueue.hasPendingRequests()) {
+            Reservation current = bookingQueue.getNextRequest();
 
-        // Suite Room
-        System.out.println("Suite Room:");
-        suiteRoom.displayRoomDetails();
-        System.out.println("Available Rooms: " +
-                inventory.getAvailability("Suite Room"));
-        System.out.println();
+            System.out.println("Processing booking for Guest: "
+                    + current.getGuestName()
+                    + ", Room Type: "
+                    + current.getRoomType());
+        }
     }
 }
