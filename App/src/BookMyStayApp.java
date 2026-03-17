@@ -1,36 +1,33 @@
+/**
+ * MAIN CLASS - BookMyStayApp
+ *
+ * Use Case 6: Reservation Confirmation & Room Allocation
+ *
+ * @version 6.0
+ */
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        System.out.println("Hotel Room Inventory Status\n");
-
-        // Room objects
-        Room singleRoom = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suiteRoom = new SuiteRoom();
+        System.out.println("Room Allocation Processing\n");
 
         // Inventory
         RoomInventory inventory = new RoomInventory();
 
-        // Single Room
-        System.out.println("Single Room:");
-        singleRoom.displayRoomDetails();
-        System.out.println("Available Rooms: " +
-                inventory.getAvailability("Single Room"));
-        System.out.println();
+        // Queue (from UC5)
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        // Double Room
-        System.out.println("Double Room:");
-        doubleRoom.displayRoomDetails();
-        System.out.println("Available Rooms: " +
-                inventory.getAvailability("Double Room"));
-        System.out.println();
+        bookingQueue.addRequest(new Reservation("Abhi", "Single Room"));
+        bookingQueue.addRequest(new Reservation("Subha", "Single Room"));
+        bookingQueue.addRequest(new Reservation("Vanmathi", "Suite Room"));
 
-        // Suite Room
-        System.out.println("Suite Room:");
-        suiteRoom.displayRoomDetails();
-        System.out.println("Available Rooms: " +
-                inventory.getAvailability("Suite Room"));
-        System.out.println();
+        // Allocation service
+        RoomAllocationService allocationService = new RoomAllocationService();
+
+        // Process requests (FIFO)
+        while (bookingQueue.hasPendingRequests()) {
+            Reservation request = bookingQueue.getNextRequest();
+            allocationService.allocateRoom(request, inventory);
+        }
     }
 }
