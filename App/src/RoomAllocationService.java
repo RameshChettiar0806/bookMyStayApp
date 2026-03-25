@@ -18,15 +18,13 @@ public class RoomAllocationService {
 
     // Stores assigned room IDs grouped by room type
     private Map<String, Set<String>> assignedRoomsByType;
-
+    private Map<String, String> reservationToRoomId;
     public RoomAllocationService() {
         allocatedRoomIds = new HashSet<>();
         assignedRoomsByType = new HashMap<>();
+        reservationToRoomId = new HashMap<>();
     }
 
-    /**
-     * Confirms a booking request and assigns a room.
-     */
     public void allocateRoom(Reservation reservation, RoomInventory inventory) {
 
         String roomType = reservation.getRoomType();
@@ -50,11 +48,14 @@ public class RoomAllocationService {
                 .computeIfAbsent(roomType, k -> new HashSet<>())
                 .add(roomId);
 
-        // Update inventory (IMPORTANT: immediately)
+        // Update inventory
         int current = inventory.getAvailability(roomType);
         inventory.updateAvailability(roomType, current - 1);
 
-        // Confirm booking
+        // Map reservation → roomId (IMPORTANT)
+        reservationToRoomId.put(reservation.getGuestName(), roomId);
+
+        // Confirm booking (ONLY ONCE)
         System.out.println("Booking confirmed for Guest: "
                 + reservation.getGuestName()
                 + ", Room ID: " + roomId);
@@ -79,4 +80,9 @@ public class RoomAllocationService {
 
         return roomId;
     }
+
+    public String getRoomIdForGuest(String guestName) {
+        return reservationToRoomId.get(guestName);
+    }
 }
+
