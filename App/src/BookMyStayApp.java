@@ -2,39 +2,64 @@
  * MAIN CLASS - BookMyStayApp
  *
  * Integrated:
- * UC5 + UC6 + UC7 + UC8
+ * UC5 + UC6 + UC7 + UC8 + UC9
  */
+import java.util.Scanner;
+
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        System.out.println("Room Allocation Processing\n");
+        System.out.println("Booking Validation & Allocation\n");
 
+        // Scanner (UC9)
+        Scanner scanner = new Scanner(System.in);
+
+        // Validator (UC9)
+        ReservationValidator validator = new ReservationValidator();
+
+        // Core components
         RoomInventory inventory = new RoomInventory();
         BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        bookingQueue.addRequest(new Reservation("Abhi", "Single Room"));
-        bookingQueue.addRequest(new Reservation("Subha", "Single Room"));
-        bookingQueue.addRequest(new Reservation("Vanmathi", "Suite Room"));
-
-        // UC8: Booking History
+        // UC8
         BookingHistory bookingHistory = new BookingHistory();
         BookingReportService reportService = new BookingReportService();
 
-        // UC6: Allocation Service
+        // UC6
         RoomAllocationService allocationService =
                 new RoomAllocationService(bookingHistory);
 
-        // UC7: Add-On Services
+        // UC7
         AddOnServiceManager serviceManager = new AddOnServiceManager();
 
+        try {
+
+            // Input
+            System.out.print("Enter guest name: ");
+            String guestName = scanner.nextLine();
+
+            System.out.print("Enter room type (Single Room/Double Room/Suite Room): ");
+            String roomType = scanner.nextLine();
+
+            // Validation (UC9)
+            validator.validate(guestName, roomType, inventory);
+
+            // Add to queue (UC5)
+            bookingQueue.addRequest(new Reservation(guestName, roomType));
+
+        } catch (InvalidBookingException e) {
+
+            System.out.println("Booking failed: " + e.getMessage());
+        }
+
+        // Process queue (UC6 + UC7 + UC8)
         while (bookingQueue.hasPendingRequests()) {
 
             Reservation request = bookingQueue.getNextRequest();
 
             allocationService.allocateRoom(request, inventory);
 
-            // UC7: Attach services AFTER confirmation
             String roomId =
                     allocationService.getRoomIdForGuest(request.getGuestName());
 
@@ -53,7 +78,9 @@ public class BookMyStayApp {
             }
         }
 
-        // UC8: Generate report
+        // Report (UC8)
         reportService.generateReport(bookingHistory);
+
+        scanner.close();
     }
 }
