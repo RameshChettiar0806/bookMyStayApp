@@ -1,8 +1,8 @@
 /**
  * MAIN CLASS - BookMyStayApp
  *
- * Integrated:
- * UC5 + UC6 + UC7 + UC8 + UC9
+ * Integrated System:
+ * UC5 + UC6 + UC7 + UC8 + UC9 + UC10
  */
 import java.util.Scanner;
 
@@ -12,40 +12,41 @@ public class BookMyStayApp {
 
         System.out.println("Booking Validation & Allocation\n");
 
-        // Scanner (UC9)
+        // UC9: Input + Validation
         Scanner scanner = new Scanner(System.in);
-
-        // Validator (UC9)
         ReservationValidator validator = new ReservationValidator();
 
-        // Core components
+        // Core system components
         RoomInventory inventory = new RoomInventory();
         BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        // UC8
+        // UC8: History + Reporting
         BookingHistory bookingHistory = new BookingHistory();
         BookingReportService reportService = new BookingReportService();
 
-        // UC6
+        // UC6: Allocation
         RoomAllocationService allocationService =
                 new RoomAllocationService(bookingHistory);
 
-        // UC7
+        // UC7: Add-On Services
         AddOnServiceManager serviceManager = new AddOnServiceManager();
+
+        // UC10: Cancellation
+        CancellationService cancellationService = new CancellationService();
 
         try {
 
-            // Input
+            // --- USER INPUT ---
             System.out.print("Enter guest name: ");
             String guestName = scanner.nextLine();
 
             System.out.print("Enter room type (Single Room/Double Room/Suite Room): ");
             String roomType = scanner.nextLine();
 
-            // Validation (UC9)
+            // --- VALIDATION (UC9) ---
             validator.validate(guestName, roomType, inventory);
 
-            // Add to queue (UC5)
+            // --- ADD TO QUEUE (UC5) ---
             bookingQueue.addRequest(new Reservation(guestName, roomType));
 
         } catch (InvalidBookingException e) {
@@ -53,11 +54,12 @@ public class BookMyStayApp {
             System.out.println("Booking failed: " + e.getMessage());
         }
 
-        // Process queue (UC6 + UC7 + UC8)
+        // --- PROCESS BOOKINGS ---
         while (bookingQueue.hasPendingRequests()) {
 
             Reservation request = bookingQueue.getNextRequest();
 
+            // UC6: Allocate
             allocationService.allocateRoom(request, inventory);
 
             String roomId =
@@ -65,6 +67,10 @@ public class BookMyStayApp {
 
             if (roomId != null) {
 
+                // UC10: Register for cancellation
+                cancellationService.registerBooking(roomId, request.getRoomType());
+
+                // UC7: Add services
                 serviceManager.addService(roomId,
                         new AddOnService("Breakfast", 500));
 
@@ -78,8 +84,20 @@ public class BookMyStayApp {
             }
         }
 
-        // Report (UC8)
+        // --- UC8: REPORT ---
         reportService.generateReport(bookingHistory);
+
+        // --- UC10: CANCELLATION DEMO ---
+        System.out.println("\nBooking Cancellation");
+
+        String cancelId = "Single Room-1"; // Example cancellation
+
+        cancellationService.cancelBooking(cancelId, inventory);
+
+        cancellationService.showRollbackHistory();
+
+        System.out.println("\nUpdated Single Room Availability: "
+                + inventory.getAvailability("Single Room"));
 
         scanner.close();
     }
