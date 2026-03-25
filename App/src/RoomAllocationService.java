@@ -6,23 +6,24 @@ import java.util.*;
  * Use Case 6: Reservation Confirmation & Room Allocation
  *
  * Description:
- * This class is responsible for confirming
- * booking requests and assigning rooms.
+ * Confirms booking requests and assigns rooms.
  *
  * @version 6.0
  */
 public class RoomAllocationService {
 
-    // Stores all allocated room IDs (global uniqueness)
     private Set<String> allocatedRoomIds;
-
-    // Stores assigned room IDs grouped by room type
     private Map<String, Set<String>> assignedRoomsByType;
+
+    // UC7 + UC8 additions
     private Map<String, String> reservationToRoomId;
-    public RoomAllocationService() {
+    private BookingHistory bookingHistory;
+
+    public RoomAllocationService(BookingHistory bookingHistory) {
         allocatedRoomIds = new HashSet<>();
         assignedRoomsByType = new HashMap<>();
         reservationToRoomId = new HashMap<>();
+        this.bookingHistory = bookingHistory;
     }
 
     public void allocateRoom(Reservation reservation, RoomInventory inventory) {
@@ -52,18 +53,18 @@ public class RoomAllocationService {
         int current = inventory.getAvailability(roomType);
         inventory.updateAvailability(roomType, current - 1);
 
-        // Map reservation → roomId (IMPORTANT)
+        // Map reservation → roomId
         reservationToRoomId.put(reservation.getGuestName(), roomId);
 
-        // Confirm booking (ONLY ONCE)
+        // Store in booking history (UC8)
+        bookingHistory.addReservation(reservation);
+
+        // Confirm booking
         System.out.println("Booking confirmed for Guest: "
                 + reservation.getGuestName()
                 + ", Room ID: " + roomId);
     }
 
-    /**
-     * Generates a unique room ID
-     */
     private String generateRoomId(String roomType) {
 
         int count = assignedRoomsByType
@@ -72,7 +73,6 @@ public class RoomAllocationService {
 
         String roomId = roomType + "-" + count;
 
-        // Extra safety (ensures no duplication globally)
         while (allocatedRoomIds.contains(roomId)) {
             count++;
             roomId = roomType + "-" + count;
@@ -81,8 +81,8 @@ public class RoomAllocationService {
         return roomId;
     }
 
+    // Used by UC7
     public String getRoomIdForGuest(String guestName) {
         return reservationToRoomId.get(guestName);
     }
 }
-

@@ -1,3 +1,9 @@
+/**
+ * MAIN CLASS - BookMyStayApp
+ *
+ * Integrated:
+ * UC5 + UC6 + UC7 + UC8
+ */
 public class BookMyStayApp {
 
     public static void main(String[] args) {
@@ -11,9 +17,15 @@ public class BookMyStayApp {
         bookingQueue.addRequest(new Reservation("Subha", "Single Room"));
         bookingQueue.addRequest(new Reservation("Vanmathi", "Suite Room"));
 
-        RoomAllocationService allocationService = new RoomAllocationService();
+        // UC8: Booking History
+        BookingHistory bookingHistory = new BookingHistory();
+        BookingReportService reportService = new BookingReportService();
 
-        // UC7: Add-On Service Manager
+        // UC6: Allocation Service
+        RoomAllocationService allocationService =
+                new RoomAllocationService(bookingHistory);
+
+        // UC7: Add-On Services
         AddOnServiceManager serviceManager = new AddOnServiceManager();
 
         while (bookingQueue.hasPendingRequests()) {
@@ -22,19 +34,26 @@ public class BookMyStayApp {
 
             allocationService.allocateRoom(request, inventory);
 
-            // Fetch generated Room ID
-            String roomId = allocationService.getRoomIdForGuest(request.getGuestName());
+            // UC7: Attach services AFTER confirmation
+            String roomId =
+                    allocationService.getRoomIdForGuest(request.getGuestName());
 
             if (roomId != null) {
 
-                // Attach services AFTER confirmation
-                serviceManager.addService(roomId, new AddOnService("Breakfast", 500));
-                serviceManager.addService(roomId, new AddOnService("Spa", 800));
+                serviceManager.addService(roomId,
+                        new AddOnService("Breakfast", 500));
 
-                double totalCost = serviceManager.calculateTotalServiceCost(roomId);
+                serviceManager.addService(roomId,
+                        new AddOnService("Spa", 800));
 
-                System.out.println("Add-On Cost for " + roomId + ": " + totalCost);
+                double total =
+                        serviceManager.calculateTotalServiceCost(roomId);
+
+                System.out.println("Add-On Cost for " + roomId + ": " + total);
             }
         }
+
+        // UC8: Generate report
+        reportService.generateReport(bookingHistory);
     }
 }
