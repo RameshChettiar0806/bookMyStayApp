@@ -1,104 +1,179 @@
-/**
- * MAIN CLASS - BookMyStayApp
- *
- * Integrated System:
- * UC5 + UC6 + UC7 + UC8 + UC9 + UC10
- */
-import java.util.Scanner;
+import java.util.*;
 
+// ==========================
+// CLASS: Reservation
+// ==========================
+class Reservation {
+    String guestName;
+    String roomType;
+
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+}
+
+// ==========================
+// CLASS: BookingRequestQueue
+// ==========================
+class BookingRequestQueue {
+    private Queue<Reservation> queue = new LinkedList<>();
+
+    public void addRequest(Reservation r) {
+        queue.add(r);
+    }
+
+    public Reservation getNextRequest() {
+        return queue.poll(); // returns null if empty
+    }
+
+    public boolean isEmpty() {
+        return queue.isEmpty();
+    }
+}
+
+// ==========================
+// CLASS: RoomInventory
+// ==========================
+class RoomInventory {
+    private Map<String, Integer> rooms = new HashMap<>();
+
+    public RoomInventory() {
+        rooms.put("Single", 5);
+        rooms.put("Double", 3);
+        rooms.put("Suite", 2);
+    }
+
+    public boolean allocateRoom(String type) {
+        int count = rooms.getOrDefault(type, 0);
+        if (count > 0) {
+            rooms.put(type, count - 1);
+            return true;
+        }
+        return false;
+    }
+
+    public int getAvailable(String type) {
+        return rooms.getOrDefault(type, 0);
+    }
+
+    public void printInventory() {
+        System.out.println("\nRemaining Inventory:");
+        System.out.println("Single: " + getAvailable("Single"));
+        System.out.println("Double: " + getAvailable("Double"));
+        System.out.println("Suite: " + getAvailable("Suite"));
+    }
+}
+
+// ==========================
+// CLASS: RoomAllocationService
+// ==========================
+class RoomAllocationService {
+
+    public void allocateRoom(Reservation reservation, RoomInventory inventory) {
+        boolean success = inventory.allocateRoom(reservation.roomType);
+
+        if (success) {
+            System.out.println("Booking confirmed for Guest: "
+                    + reservation.guestName +
+                    ", Room ID: " + reservation.roomType + "-" +
+                    (int)(Math.random() * 10));
+        } else {
+            System.out.println("Booking failed for Guest: "
+                    + reservation.guestName +
+                    " (No " + reservation.roomType + " rooms available)");
+        }
+    }
+}
+
+// ==========================
+// CLASS: ConcurrentBookingProcessor
+// ==========================
+class ConcurrentBookingProcessor implements Runnable {
+
+    private BookingRequestQueue bookingQueue;
+    private RoomInventory inventory;
+    private RoomAllocationService allocationService;
+
+    public ConcurrentBookingProcessor(
+            BookingRequestQueue bookingQueue,
+            RoomInventory inventory,
+            RoomAllocationService allocationService) {
+
+        this.bookingQueue = bookingQueue;
+        this.inventory = inventory;
+        this.allocationService = allocationService;
+    }
+
+    @Override
+    public void run() {
+
+        while (true) {
+            Reservation reservation;
+
+            // Thread-safe queue access
+            synchronized (bookingQueue) {
+                if (bookingQueue.isEmpty()) {
+                    break;
+                }
+                reservation = bookingQueue.getNextRequest();
+            }
+
+            // Thread-safe allocation
+            synchronized (inventory) {
+                allocationService.allocateRoom(reservation, inventory);
+            }
+
+            try {
+                Thread.sleep(100); // simulate delay
+            } catch (InterruptedException e) {
+                System.out.println("Thread interrupted.");
+            }
+        }
+    }
+}
+
+// ==========================
+// MAIN CLASS
+// ==========================
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        System.out.println("Booking Validation & Allocation\n");
+        System.out.println("Concurrent Booking Simulation\n");
 
-        // UC9: Input + Validation
-        Scanner scanner = new Scanner(System.in);
-        ReservationValidator validator = new ReservationValidator();
-
-        // Core system components
-        RoomInventory inventory = new RoomInventory();
+        // Shared resources
         BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        RoomInventory inventory = new RoomInventory();
+        RoomAllocationService allocationService = new RoomAllocationService();
 
-        // UC8: History + Reporting
-        BookingHistory bookingHistory = new BookingHistory();
-        BookingReportService reportService = new BookingReportService();
+        // Add booking requests
+        bookingQueue.addRequest(new Reservation("Abhi", "Single"));
+        bookingQueue.addRequest(new Reservation("Vanmathi", "Double"));
+        bookingQueue.addRequest(new Reservation("Kural", "Suite"));
+        bookingQueue.addRequest(new Reservation("Subha", "Single"));
 
-        // UC6: Allocation
-        RoomAllocationService allocationService =
-                new RoomAllocationService(bookingHistory);
+        // Create threads
+        Thread t1 = new Thread(
+                new ConcurrentBookingProcessor(
+                        bookingQueue, inventory, allocationService));
 
-        // UC7: Add-On Services
-        AddOnServiceManager serviceManager = new AddOnServiceManager();
+        Thread t2 = new Thread(
+                new ConcurrentBookingProcessor(
+                        bookingQueue, inventory, allocationService));
 
-        // UC10: Cancellation
-        CancellationService cancellationService = new CancellationService();
+        // Start threads
+        t1.start();
+        t2.start();
 
         try {
-
-            // --- USER INPUT ---
-            System.out.print("Enter guest name: ");
-            String guestName = scanner.nextLine();
-
-            System.out.print("Enter room type (Single Room/Double Room/Suite Room): ");
-            String roomType = scanner.nextLine();
-
-            // --- VALIDATION (UC9) ---
-            validator.validate(guestName, roomType, inventory);
-
-            // --- ADD TO QUEUE (UC5) ---
-            bookingQueue.addRequest(new Reservation(guestName, roomType));
-
-        } catch (InvalidBookingException e) {
-
-            System.out.println("Booking failed: " + e.getMessage());
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            System.out.println("Thread execution interrupted.");
         }
 
-        // --- PROCESS BOOKINGS ---
-        while (bookingQueue.hasPendingRequests()) {
-
-            Reservation request = bookingQueue.getNextRequest();
-
-            // UC6: Allocate
-            allocationService.allocateRoom(request, inventory);
-
-            String roomId =
-                    allocationService.getRoomIdForGuest(request.getGuestName());
-
-            if (roomId != null) {
-
-                // UC10: Register for cancellation
-                cancellationService.registerBooking(roomId, request.getRoomType());
-
-                // UC7: Add services
-                serviceManager.addService(roomId,
-                        new AddOnService("Breakfast", 500));
-
-                serviceManager.addService(roomId,
-                        new AddOnService("Spa", 800));
-
-                double total =
-                        serviceManager.calculateTotalServiceCost(roomId);
-
-                System.out.println("Add-On Cost for " + roomId + ": " + total);
-            }
-        }
-
-        // --- UC8: REPORT ---
-        reportService.generateReport(bookingHistory);
-
-        // --- UC10: CANCELLATION DEMO ---
-        System.out.println("\nBooking Cancellation");
-
-        String cancelId = "Single Room-1"; // Example cancellation
-
-        cancellationService.cancelBooking(cancelId, inventory);
-
-        cancellationService.showRollbackHistory();
-
-        System.out.println("\nUpdated Single Room Availability: "
-                + inventory.getAvailability("Single Room"));
-
-        scanner.close();
+        // Final inventory
+        inventory.printInventory();
     }
 }
