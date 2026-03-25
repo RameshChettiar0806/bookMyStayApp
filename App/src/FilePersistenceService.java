@@ -3,7 +3,9 @@ import java.util.Map;
 
 public class FilePersistenceService {
 
+    // SAVE INVENTORY
     public void saveInventory(RoomInventory inventory, String filePath) {
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 
             for (Map.Entry<String, Integer> entry : inventory.getAllRooms().entrySet()) {
@@ -18,6 +20,7 @@ public class FilePersistenceService {
         }
     }
 
+    // LOAD INVENTORY
     public void loadInventory(RoomInventory inventory, String filePath) {
 
         File file = new File(filePath);
@@ -32,12 +35,14 @@ public class FilePersistenceService {
             String line;
 
             while ((line = reader.readLine()) != null) {
+
                 String[] parts = line.split("=");
 
                 if (parts.length == 2) {
-                    String type = parts[0];
+                    String roomType = parts[0];
                     int count = Integer.parseInt(parts[1]);
-                    inventory.setRoom(type, count);
+
+                    inventory.setRoom(roomType, count);
                 }
             }
 
